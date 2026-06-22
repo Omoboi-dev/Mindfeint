@@ -1,0 +1,31 @@
+{
+  "name": "mindfeint-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Mindfeint backend — 0G compute/storage/chain + round engine + API.",
+  "scripts": {
+    "server": "tsx watch server/server.ts",
+    "dev": "tsx watch server/server.ts",
+    "providers": "tsx scripts/list-providers.ts",
+    "ledger": "tsx scripts/ledger.ts",
+    "test:round": "tsx scripts/test-round.ts",
+    "deploy:attest": "tsx scripts/deploy-attest.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@0gfoundation/0g-compute-ts-sdk": "^0.8.4",
+    "@0gfoundation/0g-storage-ts-sdk": "^1.2.10",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.0",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "solc": "^0.8.26",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.0.0",
+    "concurrently": "^9.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}
