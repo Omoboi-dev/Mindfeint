@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-brand-violet: #7c6cff;
+  --color-brand-green: #10b981;
+  --color-brand-blue: #3b82f6;
+  --color-dark-bg: #050508;
+  --color-dark-card: rgba(255, 255, 255, 0.05);
+  --color-dark-border: rgba(255, 255, 255, 0.1);
+  --font-sans: "Plus Jakarta Sans", "Inter", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+@layer utilities {
+  /* Glowing box effects */
+  .glow-violet {
+    box-shadow: 0 0 30px rgba(124, 108, 255, 0.25);
+  }
+  .glow-green {
+    box-shadow: 0 0 30px rgba(16, 185, 129, 0.25);
+  }
+  .glow-red {
+    box-shadow: 0 0 30px rgba(239, 68, 68, 0.25);
+  }
+  .glow-blue {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.25);
+  }
+
+  /* Scanline cyberware effects */
+  .cyber-scanlines {
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.35) 50%
+    ), linear-gradient(
+      90deg,
+      rgba(124, 108, 255, 0.04),
+      rgba(16, 185, 129, 0.02),
+      rgba(59, 130, 246, 0.04)
+    );
+    background-size: 100% 4px, 6px 100%;
+  }
+}
+
+/* Custom scrollbar optimization for lists */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #050508;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #7c6cff;
+}
+
+body {
+  background-color: #050508;
+  color: #e5e7eb;
+  font-family: "Plus Jakarta Sans", "Inter", sans-serif;
+}
+
