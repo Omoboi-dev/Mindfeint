@@ -51,6 +51,12 @@ export function useAuth(): AuthState {
 
   // Subscribe to Firebase auth state changes.
   useEffect(() => {
+    if (!auth) {
+      console.warn("Firebase auth is not initialized. Check your .env configuration.");
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);

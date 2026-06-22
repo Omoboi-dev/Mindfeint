@@ -23,11 +23,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Guard against hot-module-reload re-initialisation in development.
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+if (!firebaseConfig.apiKey) {
+  console.error("Missing Firebase configuration. Please create frontend/.env and add VITE_FIREBASE_API_KEY.");
+}
 
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Guard against hot-module-reload re-initialisation in development.
+const app = getApps().length === 0 && firebaseConfig.apiKey ? initializeApp(firebaseConfig) : getApps()[0] || null;
+
+export const auth = app ? getAuth(app) : null as any;
+export const googleProvider = app ? new GoogleAuthProvider() : null as any;
 
 /** Trigger the Google OAuth popup and return the signed-in Firebase User. */
 export async function signInWithGoogle(): Promise<User> {
