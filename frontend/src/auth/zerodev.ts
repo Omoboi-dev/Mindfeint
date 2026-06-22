@@ -64,30 +64,38 @@ export async function getSmartWalletAddress(
 
   try {
     // Dynamically import ZeroDev so it doesn't block the initial bundle parse.
-    const { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } =
-      await import("@zerodev/sdk");
+    const { createKernelAccount } = await import("@zerodev/sdk");
     const { signerToEcdsaValidator } = await import("@zerodev/ecdsa-validator");
     const { KERNEL_V3_1 } = await import("@zerodev/sdk/constants");
-    const { createBundlerClient } = await import("viem/account-abstraction");
+
+    // ERC-4337 v0.7 entry point — fixed address on all EVM chains.
+    const ENTRYPOINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032" as const;
+
 
     const privateKey = await deriveKeyFromUid(uid);
     const signer = privateKeyToAccount(privateKey);
 
     const bundlerRpc = `https://rpc.zerodev.app/api/v3/${projectId}/chain/${og0GGalileo.id}`;
-    const paymasterRpc = `https://rpc.zerodev.app/api/v3/${projectId}/chain/${og0GGalileo.id}`;
 
     const publicClient = createPublicClient({
       chain: og0GGalileo,
       transport: http(bundlerRpc),
     });
 
+    const entryPoint = {
+      address: ENTRYPOINT_V07,
+      version: "0.7" as const,
+    };
+
     const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
       signer,
+      entryPoint,
       kernelVersion: KERNEL_V3_1,
     });
 
     const account = await createKernelAccount(publicClient, {
       plugins: { sudo: ecdsaValidator },
+      entryPoint,
       kernelVersion: KERNEL_V3_1,
     });
 
