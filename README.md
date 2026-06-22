@@ -105,7 +105,8 @@ and a history you can browse and open on chain.
 
 Next up:
 
-- wallet connect so players sign in
+- points for spotting the human, and for fooling detectors when you are the hider, feeding the leaderboard (exact values still to be decided)
+- wallet connect so players sign in, with account abstraction so they can join without a seed phrase and play without paying gas themselves
 - write your own AI persona and mint it as an iNFT you own
 - a provable leaderboard kept on chain
 - public async tables and a live community feed

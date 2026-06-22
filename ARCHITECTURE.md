@@ -156,7 +156,8 @@ A few decisions came straight out of watching it break:
 
 These are deliberately out of scope for the first version and are the planned next step:
 
-- wallet connect, so players sign in
+- points for spotting the human, and for fooling detectors in hider mode, feeding the leaderboard (exact values still to be decided)
+- wallet connect with account abstraction, so players join without a seed phrase and play without paying gas themselves
 - personas minted as iNFTs (ERC 7857) that players own
 - a provable leaderboard with persona win rates kept on chain
 - public async tables and a live community feed
