@@ -40,7 +40,8 @@ export type AppState =
   | "HIDER_SUCCESS"
   | "HOWTO"
   | "ABOUT"
-  | "HISTORY";
+  | "HISTORY"
+  | "ROADMAP";
 
 /** Authenticated player identity — wraps Firebase User + ZeroDev smart wallet. */
 export interface AuthUser {
