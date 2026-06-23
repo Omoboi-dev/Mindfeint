@@ -5,7 +5,9 @@
   "description": "Social deduction where the AIs are provably real — built on 0G.",
   "scripts": {
     "dev": "concurrently -n api,web -c magenta,cyan \"npm --prefix backend run server\" \"npm --prefix frontend run dev\"",
-    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install --legacy-peer-deps",
+    "build": "npm --prefix backend install && npm --prefix frontend install --legacy-peer-deps --include=dev && npm --prefix frontend run build",
+    "start": "npm --prefix backend run start",
     "ledger": "npm --prefix backend run ledger",
     "deploy:attest": "npm --prefix backend run deploy:attest",
     "test:round": "npm --prefix backend run test:round"
