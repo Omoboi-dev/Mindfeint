@@ -5,23 +5,19 @@ import {
   Bot,
   Eye,
   UserCheck,
-  Compass,
-  Network,
   Sparkles,
   Check,
-  Flame,
   ArrowRight,
-  Lock,
   RefreshCw,
-  HelpCircle,
   Send,
   Shield,
-  Clock,
   LogOut,
   ChevronRight,
   Database,
   Menu,
-  X
+  X,
+  Wallet,
+  Loader2
 } from "lucide-react";
 
 import { AppState, PromptPack, PublicRound, Reveal, PlayerStats, GameHistoryEntry } from "./types";
@@ -32,11 +28,18 @@ import HistoryStats from "./components/HistoryStats";
 import HowToPlay from "./components/HowToPlay";
 import About from "./components/About";
 import HistoryPage from "./components/HistoryPage";
-
-// Unique guest user ID on first boot-up
-const VOTER_ID = "voter_" + Math.random().toString(36).substring(2, 11);
+import LoginScreen from "./components/LoginScreen";
+import { useAuth } from "./auth/useAuth";
 
 export default function App() {
+  // ── Auth (Firebase + ZeroDev) ──
+  const { user, loading: authLoading, walletAddress, walletLoading, signInWithGoogle, signOut } = useAuth();
+
+  // Stable voter ID: use Firebase UID when authenticated, fall back to
+  // a session-scoped random id so unauthenticated play still works.
+  const sessionId = useRef("guest_" + Math.random().toString(36).substring(2, 11));
+  const voterId = user?.uid ?? sessionId.current;
+
   // Game States
   const [appState, setAppState] = useState<AppState>("LOBBY");
   const [packs, setPacks] = useState<PromptPack[]>([]);
@@ -129,7 +132,7 @@ export default function App() {
       const roundRes = await fetch("/api/round", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ pack: packId, voterId: VOTER_ID }),
+        body: JSON.stringify({ pack: packId, voterId }),
       });
       const roundData = (await roundRes.json()) as PublicRound;
       // Player left / started something else while we were waiting — drop this result.
@@ -153,7 +156,7 @@ export default function App() {
       const res = await fetch(`/api/round/${activeRound.id}/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seat: selectedSeat, voterId: VOTER_ID }),
+        body: JSON.stringify({ seat: selectedSeat, voterId }),
       });
       const revealData = (await res.json()) as Reveal;
 
@@ -238,7 +241,7 @@ export default function App() {
       const response = await fetch("/api/hide", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: hiderPrompt, text: hiderText, voterId: VOTER_ID }),
+        body: JSON.stringify({ prompt: hiderPrompt, text: hiderText, voterId }),
       });
       const data = await response.json();
       if (data.ok) {
@@ -263,6 +266,25 @@ export default function App() {
       setHistory([]);
     }
   };
+
+  // ── Auth gate: full-page spinner while Firebase resolves ──
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-dark-bg flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 bg-brand-violet rounded flex items-center justify-center shadow-[0_0_20px_rgba(124,108,255,0.5)]">
+            <span className="text-black font-black text-2xl font-display">M</span>
+          </div>
+          <Loader2 className="w-6 h-6 text-brand-violet animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Auth gate: show login screen when not signed in ──
+  if (!user) {
+    return <LoginScreen onSignIn={signInWithGoogle} />;
+  }
 
   return (
     <div className="min-h-screen bg-dark-bg text-gray-100 flex flex-col relative overflow-hidden font-sans pt-4 sm:pt-5" id="mindfeint-root">
@@ -298,6 +320,50 @@ export default function App() {
             <span className="text-xs font-mono text-brand-green">0G-GALILEO_LIVE</span>
           </div>
           <div className="h-6 w-px bg-white/10 hidden md:block"></div>
+
+          {/* ── Smart wallet badge ── */}
+          {walletAddress ? (
+            <div className="hidden md:flex items-center gap-1.5 bg-brand-violet/10 border border-brand-violet/20 px-2.5 py-1 rounded-full">
+              <Wallet className="w-3 h-3 text-brand-violet" />
+              <span className="text-[10px] font-mono text-brand-violet">
+                {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
+              </span>
+            </div>
+          ) : walletLoading ? (
+            <div className="hidden md:flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+              <Loader2 className="w-3 h-3 text-gray-500 animate-spin" />
+              <span className="text-[10px] font-mono text-gray-500">provisioning…</span>
+            </div>
+          ) : null}
+
+          {/* ── User avatar ── */}
+          <div className="relative group">
+            {user.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName ?? "Player"}
+                className="w-8 h-8 rounded-full border-2 border-brand-violet/40 cursor-pointer hover:border-brand-violet transition-colors"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-brand-violet/20 border-2 border-brand-violet/40 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold">
+                {(user.displayName ?? user.email ?? "?")[0].toUpperCase()}
+              </div>
+            )}
+            {/* Hover dropdown */}
+            <div className="absolute right-0 top-10 hidden group-hover:flex flex-col bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[180px] z-50 gap-1">
+              <p className="text-xs font-semibold text-white truncate px-1 pb-1 border-b border-white/10">
+                {user.displayName ?? user.email ?? "Player"}
+              </p>
+              <button
+                onClick={signOut}
+                id="btn-sign-out"
+                className="flex items-center gap-2 text-xs text-gray-400 hover:text-red-400 px-1 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer font-mono"
+              >
+                <LogOut className="w-3.5 h-3.5" /> Sign Out
+              </button>
+            </div>
+          </div>
+
           {appState !== "LOBBY" && (
             <button
               onClick={goHome}
@@ -320,6 +386,25 @@ export default function App() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div className="md:hidden relative z-20 mx-3 sm:mx-4 mt-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-2 flex flex-col gap-1">
+          {/* Mobile user info strip */}
+          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/10 mb-1">
+            {user.photoURL ? (
+              <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full border border-brand-violet/40" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-brand-violet/20 border border-brand-violet/40 flex items-center justify-center text-brand-violet text-xs font-bold">
+                {(user.displayName ?? "?")[0].toUpperCase()}
+              </div>
+            )}
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-white truncate">{user.displayName ?? user.email}</span>
+              {walletAddress && (
+                <span className="text-[10px] font-mono text-brand-violet truncate">
+                  {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
+                </span>
+              )}
+            </div>
+          </div>
+
           {[
             { label: "Home", state: "LOBBY" as AppState },
             { label: "How to Play", state: "HOWTO" as AppState },
@@ -338,6 +423,14 @@ export default function App() {
               {item.label}
             </button>
           ))}
+
+          {/* Mobile sign-out */}
+          <button
+            onClick={() => { signOut(); setMenuOpen(false); }}
+            className="flex items-center gap-2 text-left px-4 py-2.5 rounded-lg text-sm font-mono text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer mt-1 border-t border-white/10"
+          >
+            <LogOut className="w-4 h-4" /> Sign Out
+          </button>
         </div>
       )}
 

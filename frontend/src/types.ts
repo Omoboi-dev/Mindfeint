@@ -31,6 +31,7 @@ export interface Reveal {
 }
 
 export type AppState =
+  | "LOGIN"
   | "LOBBY"
   | "WAITING"
   | "DETECTOR"
@@ -40,6 +41,16 @@ export type AppState =
   | "HOWTO"
   | "ABOUT"
   | "HISTORY";
+
+/** Authenticated player identity — wraps Firebase User + ZeroDev smart wallet. */
+export interface AuthUser {
+  uid: string;
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+  /** ERC-4337 Kernel smart wallet address provisioned via ZeroDev (empty while loading). */
+  smartWalletAddress: string;
+}
 
 export interface GameHistoryEntry {
   roundId: string;
