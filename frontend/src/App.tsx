@@ -86,6 +86,21 @@ export default function App() {
     setTimeout(() => setConfetti([]), 1200);
   }, []);
 
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close the account menu when clicking anywhere outside it.
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [userMenuOpen]);
+
   // Hider Mode States
   const [hiderPrompt, setHiderPrompt] = useState<string>("");
   const [hiderText, setHiderText] = useState("");
@@ -394,36 +409,57 @@ export default function App() {
             </div>
           ) : null}
 
-          {/* User avatar + dropdown */}
-          <div className="relative group">
-            {user.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt={user.displayName ?? 'Player'}
-                className="w-8 h-8 rounded-full border-2 border-brand-violet/30 cursor-pointer hover:border-brand-violet transition-all shadow-[0_0_10px_rgba(139,127,255,0.2)]"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-brand-violet/20 border-2 border-brand-violet/30 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold">
-                {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
-              </div>
-            )}
-            <div className="absolute right-0 top-11 hidden group-hover:flex flex-col bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.8)] min-w-[200px] z-50 gap-1">
-              <p className="text-xs font-semibold text-white truncate px-2 pb-2 border-b border-white/8 mb-1">
-                {user.displayName ?? user.email ?? 'Player'}
-              </p>
-              {walletAddress && (
-                <p className="text-[9px] font-mono text-brand-violet px-2 pb-1 truncate">
-                  {walletAddress.slice(0,8)}…{walletAddress.slice(-6)}
-                </p>
+          {/* User avatar + dropdown (click to open) */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen((o) => !o)}
+              aria-label="Account menu"
+              className="block rounded-full focus:outline-none"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName ?? 'Player'}
+                  className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-all shadow-[0_0_10px_rgba(139,127,255,0.2)] ${
+                    userMenuOpen ? "border-brand-violet" : "border-brand-violet/30 hover:border-brand-violet"
+                  }`}
+                />
+              ) : (
+                <div className={`w-8 h-8 rounded-full bg-brand-violet/20 border-2 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold transition-all ${
+                  userMenuOpen ? "border-brand-violet" : "border-brand-violet/30 hover:border-brand-violet"
+                }`}>
+                  {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
+                </div>
               )}
-              <button
-                onClick={signOut}
-                id="btn-sign-out"
-                className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-red px-2 py-2 rounded-xl hover:bg-red-500/8 transition-all cursor-pointer font-mono"
-              >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
-              </button>
-            </div>
+            </button>
+
+            <AnimatePresence>
+              {userMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-11 flex flex-col bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.8)] min-w-[200px] z-50 gap-1"
+                >
+                  <p className="text-xs font-semibold text-white truncate px-2 pb-2 border-b border-white/8 mb-1">
+                    {user.displayName ?? user.email ?? 'Player'}
+                  </p>
+                  {walletAddress && (
+                    <p className="text-[9px] font-mono text-brand-violet px-2 pb-1 truncate">
+                      {walletAddress.slice(0,8)}…{walletAddress.slice(-6)}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => { setUserMenuOpen(false); signOut(); }}
+                    id="btn-sign-out"
+                    className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-red px-2 py-2 rounded-xl hover:bg-red-500/8 transition-all cursor-pointer font-mono"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Sign Out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {appState !== 'LOBBY' && (
