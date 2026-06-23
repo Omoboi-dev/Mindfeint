@@ -60,6 +60,20 @@ export default function App() {
   // it was cancelled so it doesn't yank the player back into the table.
   const reqSeq = useRef(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close the account menu when clicking anywhere outside it.
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [userMenuOpen]);
 
   // Hider Mode States
   const [hiderPrompt, setHiderPrompt] = useState<string>("");
@@ -336,32 +350,42 @@ export default function App() {
             </div>
           ) : null}
 
-          {/* ── User avatar ── */}
-          <div className="relative group">
-            {user.photoURL ? (
-              <img
-                src={user.photoURL}
-                alt={user.displayName ?? "Player"}
-                className="w-8 h-8 rounded-full border-2 border-brand-violet/40 cursor-pointer hover:border-brand-violet transition-colors"
-              />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-brand-violet/20 border-2 border-brand-violet/40 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold">
-                {(user.displayName ?? user.email ?? "?")[0].toUpperCase()}
+          {/* ── User avatar (click to open menu) ── */}
+          <div className="relative" ref={userMenuRef}>
+            <button
+              onClick={() => setUserMenuOpen((o) => !o)}
+              aria-label="Account menu"
+              className="block rounded-full focus:outline-none"
+            >
+              {user.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName ?? "Player"}
+                  className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-colors ${
+                    userMenuOpen ? "border-brand-violet" : "border-brand-violet/40 hover:border-brand-violet"
+                  }`}
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-brand-violet/20 border-2 border-brand-violet/40 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold">
+                  {(user.displayName ?? user.email ?? "?")[0].toUpperCase()}
+                </div>
+              )}
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 top-11 flex flex-col bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[180px] z-50 gap-1">
+                <p className="text-xs font-semibold text-white truncate px-1 pb-2 border-b border-white/10">
+                  {user.displayName ?? user.email ?? "Player"}
+                </p>
+                <button
+                  onClick={() => { setUserMenuOpen(false); signOut(); }}
+                  id="btn-sign-out"
+                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-red-400 px-1 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer font-mono"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Sign Out
+                </button>
               </div>
             )}
-            {/* Hover dropdown */}
-            <div className="absolute right-0 top-10 hidden group-hover:flex flex-col bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[180px] z-50 gap-1">
-              <p className="text-xs font-semibold text-white truncate px-1 pb-1 border-b border-white/10">
-                {user.displayName ?? user.email ?? "Player"}
-              </p>
-              <button
-                onClick={signOut}
-                id="btn-sign-out"
-                className="flex items-center gap-2 text-xs text-gray-400 hover:text-red-400 px-1 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer font-mono"
-              >
-                <LogOut className="w-3.5 h-3.5" /> Sign Out
-              </button>
-            </div>
           </div>
 
           {appState !== "LOBBY" && (
