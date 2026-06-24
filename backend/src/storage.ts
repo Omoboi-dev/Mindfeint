@@ -5,6 +5,9 @@
  * (the root is NOT a transaction, so explorer "/tx/<root>" links don't resolve).
  */
 import { ethers } from "ethers";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { readFileSync, rmSync } from "node:fs";
 import { Indexer, MemData } from "@0gfoundation/0g-storage-ts-sdk";
 
 const RPC_URL = process.env.RPC_URL || "https://evmrpc-testnet.0g.ai";
@@ -41,4 +44,17 @@ export async function uploadJson(obj: unknown): Promise<UploadResult> {
   }
 
   return { root, txHash };
+}
+
+/** Download a JSON record back from 0G Storage by its root hash. */
+export async function downloadJson(root: string): Promise<any> {
+  const indexer = new Indexer(INDEXER_RPC);
+  const out = join(tmpdir(), `mf-${Date.now()}-${Math.random().toString(36).slice(2)}.json`);
+  const err = await indexer.download(root, out, true);
+  if (err) throw new Error(String(err));
+  try {
+    return JSON.parse(readFileSync(out, "utf8"));
+  } finally {
+    rmSync(out, { force: true });
+  }
 }
