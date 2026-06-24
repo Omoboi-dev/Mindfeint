@@ -155,14 +155,14 @@ function MilestoneCard({ milestone, index }: { milestone: Milestone; index: numb
   const cfg = statusConfig[milestone.status];
 
   return (
-    <div ref={ref} className={`relative flex items-start gap-0 ${isLeft ? "flex-row" : "flex-row-reverse"}`}>
+    <div ref={ref} className={`relative flex items-start gap-0 pl-12 md:pl-0 ${isLeft ? "md:flex-row" : "md:flex-row-reverse"}`}>
 
       {/* Card */}
       <motion.div
         initial={{ opacity: 0, x: isLeft ? -40 : 40, scale: 0.92 }}
         animate={isInView ? { opacity: 1, x: 0, scale: 1 } : {}}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: 0.05 }}
-        className={`w-[calc(50%-2rem)] glass-card ${cfg.cardClass} p-6 rounded-2xl relative overflow-hidden group`}
+        className={`w-full md:w-[calc(50%-2rem)] glass-card ${cfg.cardClass} p-6 rounded-2xl relative overflow-hidden group`}
         style={{ perspective: "1000px" }}
       >
         {/* Corner neural grid */}
@@ -207,13 +207,13 @@ function MilestoneCard({ milestone, index }: { milestone: Milestone; index: numb
         </div>
       </motion.div>
 
-      {/* Center connector to rail */}
-      <div className={`w-8 flex-shrink-0 flex ${isLeft ? "justify-end" : "justify-start"} items-center pt-8`}>
+      {/* Center connector to rail (desktop only) */}
+      <div className={`hidden md:flex w-8 flex-shrink-0 ${isLeft ? "justify-end" : "justify-start"} items-center pt-8`}>
         <div className="w-8 h-px bg-white/10" />
       </div>
 
-      {/* Spacer for other side */}
-      <div className="w-[calc(50%-2rem)]" />
+      {/* Spacer for other side (desktop only) */}
+      <div className="hidden md:block w-[calc(50%-2rem)]" />
     </div>
   );
 }
@@ -259,11 +259,11 @@ export default function Roadmap({ onBack }: RoadmapProps) {
 
       {/* ── 3D Spatial Timeline ── */}
       <div className="relative">
-        {/* The glowing rail — centered vertical line */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 rail-glow rounded-full" />
+        {/* The glowing rail — left on mobile, centered on desktop */}
+        <div className="absolute left-5 md:left-1/2 -translate-x-1/2 top-0 bottom-0 w-0.5 rail-glow rounded-full" />
 
         {/* Dot markers on the rail */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 bottom-0 flex flex-col">
+        <div className="absolute left-5 md:left-1/2 -translate-x-1/2 top-0 bottom-0 flex flex-col">
           {MILESTONES.map((m, i) => {
             const cfg = statusConfig[m.status];
             return (
