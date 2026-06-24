@@ -15,10 +15,11 @@ import { recordRound } from "./records.js";
 import type { Answer, Mode, PublicRound, Reveal, Round } from "./types.js";
 
 const TABLE_SIZE = 6; // 5 AI + 1 human
+const MAX_HUMAN_USES = 3; // a hider answer is shown to at most this many detectors, then retired
 const rounds = new Map<string, Round>();
 
 /** Queue of real human answers (seeded by hider mode) for detector rounds to consume. */
-const humanQueue: { prompt: string; text: string; by: string }[] = [];
+const humanQueue: { prompt: string; text: string; by: string; uses: number }[] = [];
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -43,9 +44,13 @@ export async function createDetectorRound(packId: string, voterId = "anon"): Pro
   let humanText: string;
   let humanBy: string | undefined;
   if (qIdx >= 0) {
-    const picked = humanQueue.splice(qIdx, 1)[0];
+    const picked = humanQueue[qIdx];
     humanText = picked.text;
     humanBy = picked.by;
+    picked.uses += 1;
+    // Retire the answer once it has been shown to enough detectors, so a planted
+    // answer can't be farmed indefinitely.
+    if (picked.uses >= MAX_HUMAN_USES) humanQueue.splice(qIdx, 1);
   } else {
     humanText = seedHuman(prompt);
   }
@@ -89,7 +94,7 @@ export function pickHiderPrompt(packId: string): { pack: string; prompt: string 
 
 /** Hider mode: queue a real human answer, tied to the exact prompt + who wrote it. */
 export function submitHiderAnswer(prompt: string, text: string, by = "anon"): { ok: true } {
-  humanQueue.push({ prompt, text: text.trim(), by });
+  humanQueue.push({ prompt, text: text.trim(), by, uses: 0 });
   return { ok: true };
 }
 
