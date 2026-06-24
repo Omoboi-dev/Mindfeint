@@ -41,6 +41,37 @@ export interface PersonaAnswer {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Hard cap so AI answers stay as short as a real human's. Keep the first sentence;
+// if it is still too long, trim to a word boundary. Roughly the length of our human
+// seed answers, plus a little.
+const MAX_ANSWER_CHARS = 150;
+function shorten(raw: string): string {
+  let t = raw.replace(/\s+/g, " ").trim();
+  // Drop the filler opener the model loves ("Well, ...") — it became a tell.
+  t = t.replace(/^(well|honestly|so|hmm|oh),?\s+/i, "");
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+
+  // Keep whole sentences up to the budget (so we get one or two short ones,
+  // matching how a real person answers — never a single clipped word, never a paragraph).
+  const parts = t.match(/[^.!?]+[.!?]?/g) ?? [t];
+  let out = "";
+  for (const p of parts) {
+    const next = (out + p).trim();
+    if (out && next.length > MAX_ANSWER_CHARS) break;
+    out = next;
+  }
+  out = out.trim();
+
+  // Safety net: if even the first sentence is huge, trim to a word boundary.
+  if (out.length > MAX_ANSWER_CHARS) {
+    const cut = out.slice(0, MAX_ANSWER_CHARS);
+    const sp = cut.lastIndexOf(" ");
+    out = (sp > 40 ? cut.slice(0, sp) : cut).replace(/[,;:\s]+$/, "");
+    if (!/[.!?]$/.test(out)) out += ".";
+  }
+  return out;
+}
+
 /**
  * Ask one persona, retrying a couple of times. The 0G provider can blip (auto-funding,
  * nonce collisions when calls fire together, cold starts), so a single attempt isn't
@@ -117,6 +148,8 @@ async function askPersonaOnce(
   // Strip surrounding quotes the model sometimes adds.
   text = text.replace(/^["'](.*)["']$/s, "$1").trim();
   if (!text) return null; // empty content → retry
+  // Keep it short so a rambling AI answer can't be spotted next to a tight human one.
+  text = shorten(text);
 
   let verified: boolean | undefined;
   if (verify && chatId) {

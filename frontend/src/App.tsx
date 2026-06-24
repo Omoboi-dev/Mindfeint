@@ -1085,15 +1085,15 @@ export default function App() {
                 <div className="bg-dark-card border border-dark-border rounded-xl p-4">
                   <div className="flex justify-between items-center text-xs font-mono text-gray-500 mb-2">
                     <label htmlFor="hiderAnswer">Your Answer (be tactical, sound human!):</label>
-                    <span className={hiderText.length > 150 ? "text-yellow-500" : ""}>
-                      {hiderText.length} chars (aim under 30 words)
+                    <span className={hiderText.length > 135 ? "text-yellow-500" : ""}>
+                      {hiderText.length} / 150
                     </span>
                   </div>
                   <textarea
                     id="hiderAnswer"
                     required
-                    placeholder="Type your witty social response here..."
-                    maxLength={300}
+                    placeholder="Type your answer in one short sentence..."
+                    maxLength={150}
                     value={hiderText}
                     onChange={(e) => setHiderText(e.target.value)}
                     className="w-full h-32 bg-dark-bg border border-dark-border rounded-lg p-3 text-sm text-gray-100 placeholder-gray-600 focus:outline-none focus:border-brand-green focus:ring-1 focus:ring-brand-green resize-none leading-relaxed transition-all"

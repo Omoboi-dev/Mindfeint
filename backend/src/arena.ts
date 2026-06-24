@@ -94,7 +94,8 @@ export function pickHiderPrompt(packId: string): { pack: string; prompt: string 
 
 /** Hider mode: queue a real human answer, tied to the exact prompt + who wrote it. */
 export function submitHiderAnswer(prompt: string, text: string, by = "anon"): { ok: true } {
-  humanQueue.push({ prompt, text: text.trim(), by, uses: 0 });
+  // Cap to match the AI answer length, so a long human answer can't become a tell.
+  humanQueue.push({ prompt, text: text.trim().slice(0, 150), by, uses: 0 });
   return { ok: true };
 }
 
