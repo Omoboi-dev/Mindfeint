@@ -990,14 +990,13 @@ export default function App() {
                             )}
                           </span>
 
-                          {/* Cryptographically Sealed clickable badge */}
+                          {/* Per-answer verification: the 0G TEE signature checked at
+                              generation time. It is not its own transaction — the whole
+                              round is recorded on chain together (see "View 0G Proof"). */}
                           {answer.verified && (
-                            <button
-                              onClick={() => setProofModalOpen(true)}
-                              className="text-brand-violet hover:text-white flex items-center gap-1 font-semibold hover:underline bg-brand-violet/5 border border-brand-violet/20 px-2 py-0.5 rounded cursor-pointer transition-all animate-pulse"
-                            >
-                              🔑 Verification Proof
-                            </button>
+                            <span className="text-brand-green flex items-center gap-1 font-semibold bg-brand-green/5 border border-brand-green/20 px-2 py-0.5 rounded">
+                              ✓ TEE verified on 0G
+                            </span>
                           )}
                         </div>
                       </div>

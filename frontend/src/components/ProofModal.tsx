@@ -80,6 +80,14 @@ export default function ProofModal({
             </div>
           </div>
 
+          {/* Clarify scope: these transactions cover the whole round, not one answer. */}
+          <p className="text-xs text-gray-400 leading-relaxed mb-5 -mt-2">
+            This is the record for the <b className="text-white">whole round</b> — all six
+            answers and each one's verification are stored together, so every answer shares
+            these same two transactions. Each AI answer is also individually checked by the
+            0G TEE at generation time (the <span className="text-brand-green">✓ verified</span> tag).
+          </p>
+
           {/* Verifiable Inference Prompt Section */}
           <div className="bg-dark-bg border border-dark-border rounded-lg p-3 mb-6">
             <span className="font-mono text-[9px] text-gray-500 uppercase tracking-widest block mb-1">
