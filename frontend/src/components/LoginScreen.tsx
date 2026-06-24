@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { AlertCircle, Loader2, Sparkles, Fingerprint } from "lucide-react";
+import { AlertCircle, Loader2, Sparkles } from "lucide-react";
 
 interface LoginScreenProps {
   onSignIn: () => Promise<void>;
@@ -73,12 +73,12 @@ export default function LoginScreen({ onSignIn }: LoginScreenProps) {
             {/* ── Header ── */}
             <div className="text-center mb-10">
               <motion.div
-                initial={{ rotate: -180, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                className="w-20 h-20 mx-auto bg-white rounded-2xl flex items-center justify-center mb-6 shadow-[0_0_50px_rgba(255,255,255,0.2)] border-4 border-white/20"
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
+                className="w-20 h-20 mx-auto rounded-2xl mb-6 shadow-[0_0_50px_rgba(139,127,255,0.3)] overflow-hidden"
               >
-                <Fingerprint className="w-10 h-10 text-black" strokeWidth={2.5} />
+                <img src="/logo.png" alt="Mindfeint" className="w-full h-full object-cover" />
               </motion.div>
 
               <h2 className="text-4xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase">

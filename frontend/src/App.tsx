@@ -320,9 +320,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 bg-brand-violet rounded flex items-center justify-center shadow-[0_0_20px_rgba(124,108,255,0.5)]">
-            <span className="text-black font-black text-2xl font-display">M</span>
-          </div>
+          <img src="/logo.png" alt="Mindfeint" className="w-10 h-10 rounded object-cover shadow-[0_0_20px_rgba(124,108,255,0.5)]" />
           <Loader2 className="w-6 h-6 text-brand-violet animate-spin" />
         </div>
       </div>
@@ -354,9 +352,7 @@ export default function App() {
         <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={goHome}>
           <div className="relative w-8 h-8">
             <div className="absolute inset-0 rounded-md bg-brand-violet/30 blur-md group-hover:bg-brand-violet/50 transition-colors" />
-            <div className="relative w-8 h-8 bg-brand-violet rounded-md flex items-center justify-center shadow-[0_0_20px_rgba(139,127,255,0.5)]">
-              <span className="text-black font-black text-xl font-display">M</span>
-            </div>
+            <img src="/logo.png" alt="Mindfeint" className="relative w-8 h-8 rounded-md object-cover shadow-[0_0_20px_rgba(139,127,255,0.5)]" />
           </div>
           <span className="text-sm sm:text-lg font-bold tracking-tighter text-white font-display hidden sm:block">
             MINDFEINT
@@ -1220,9 +1216,7 @@ export default function App() {
       <footer className="border-t border-white/5 py-5 px-6 relative z-10 mt-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-brand-violet rounded flex items-center justify-center">
-              <span className="text-black font-black text-xs font-display">M</span>
-            </div>
+            <img src="/logo.png" alt="Mindfeint" className="w-5 h-5 rounded object-cover" />
             <span className="text-[10px] font-mono text-text-muted">MINDFEINT © 2026</span>
           </div>
           <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
