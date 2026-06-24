@@ -45,6 +45,13 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // if it is still too long, trim to a word boundary. Roughly the length of our human
 // seed answers, plus a little.
 const MAX_ANSWER_CHARS = 150;
+// Words an answer must not end on after a hard trim (would read as a cut-off fragment).
+const WEAK_ENDINGS = new Set([
+  "a", "an", "the", "to", "of", "for", "with", "and", "but", "or", "so", "just", "that",
+  "this", "these", "those", "my", "your", "their", "his", "her", "its", "our", "is", "are",
+  "was", "were", "in", "on", "at", "as", "by", "into", "than", "then", "because", "instead",
+  "about", "over", "without", "really", "very", "such", "where", "when", "while", "from",
+]);
 function shorten(raw: string): string {
   let t = raw.replace(/\s+/g, " ").trim();
   // Replace dashes (em, en, or spaced hyphen) with a comma — no dashes in answers.
@@ -64,11 +71,23 @@ function shorten(raw: string): string {
   }
   out = out.trim();
 
-  // Safety net: if even the first sentence is huge, trim to a word boundary.
-  if (out.length > MAX_ANSWER_CHARS) {
-    const cut = out.slice(0, MAX_ANSWER_CHARS);
-    const sp = cut.lastIndexOf(" ");
-    out = (sp > 40 ? cut.slice(0, sp) : cut).replace(/[,;:\s]+$/, "");
+  // Tidy when the answer is over budget OR the model trailed off without ending the
+  // sentence (no terminal punctuation). Trim to the budget, drop a dangling
+  // connector/preposition so it never ends on "...helpful for" or "...items that",
+  // then close it with a full stop.
+  const tooLong = out.length > MAX_ANSWER_CHARS;
+  const trailedOff = !/[.!?]"?$/.test(out);
+  if (tooLong || trailedOff) {
+    if (tooLong) {
+      const cut = out.slice(0, MAX_ANSWER_CHARS);
+      const sp = cut.lastIndexOf(" ");
+      out = sp > 40 ? cut.slice(0, sp) : cut;
+    }
+    let words = out.split(/\s+/);
+    while (words.length > 4 && WEAK_ENDINGS.has(words[words.length - 1].toLowerCase().replace(/[^a-z]/g, ""))) {
+      words.pop();
+    }
+    out = words.join(" ").replace(/[,;:\s]+$/, "");
     if (!/[.!?]$/.test(out)) out += ".";
   }
   return out;
@@ -188,16 +207,33 @@ export async function askAll(
   personas: Persona[],
   prompt: string,
   verify = true,
+  seedAvoid: string[] = [],
 ): Promise<PersonaAnswer[]> {
   const out: PersonaAnswer[] = [];
-  const seen = new Set<string>();
+  const seen = new Set<string>(seedAvoid.map(norm));
   for (const p of personas) {
-    // Feed prior answers forward so each persona picks a different take.
-    let ans = await askPersona(p, prompt, verify, out.map((a) => a.text));
+    // Feed the human answer + prior AI answers forward so each picks a different take.
+    const avoid = [...seedAvoid, ...out.map((a) => a.text)];
+    let ans = await askPersona(p, prompt, verify, avoid);
     // Last-resort guard against an exact duplicate line slipping through.
     if (seen.has(norm(ans.text))) ans = { ...ans, text: fallbackFor(p), verified: undefined };
     seen.add(norm(ans.text));
     out.push(ans);
   }
   return out;
+}
+
+/**
+ * Generate a believable human-style answer for the human seat, used when no real
+ * hider answer and no hand-written seed exists for a prompt. Not verified — it stands
+ * in for the human, and it lets us add unlimited prompts without writing seeds for each.
+ */
+export async function generateHumanAnswer(prompt: string): Promise<string> {
+  const human: Persona = {
+    id: "p_human",
+    name: "human",
+    mind: "an ordinary person giving a genuine, honest, everyday answer with no special quirk",
+  };
+  const a = await askPersona(human, prompt, false);
+  return a.text;
 }

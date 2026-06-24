@@ -9,8 +9,8 @@
  */
 import { randomUUID } from "node:crypto";
 import { drawPersonas } from "./personas.js";
-import { randomPrompt, seedHuman } from "./prompts.js";
-import { askAll } from "./inference.js";
+import { randomPrompt, seedHuman, SEED_HUMANS } from "./prompts.js";
+import { askAll, generateHumanAnswer } from "./inference.js";
 import { recordRound } from "./records.js";
 import type { Answer, Mode, PublicRound, Reveal, Round } from "./types.js";
 
@@ -20,6 +20,9 @@ const rounds = new Map<string, Round>();
 
 /** Queue of real human answers (seeded by hider mode) for detector rounds to consume. */
 const humanQueue: { prompt: string; text: string; by: string; uses: number }[] = [];
+
+/** Remember each player's last prompt so we never serve it twice in a row. */
+const lastPromptByVoter = new Map<string, string>();
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -36,10 +39,17 @@ function shuffle<T>(arr: T[]): T[] {
  * game is playable from minute one.
  */
 export async function createDetectorRound(packId: string, voterId = "anon"): Promise<PublicRound> {
-  const { pack, prompt } = randomPrompt(packId);
+  // Pick a prompt, but never the same one this player just had.
+  let pick = randomPrompt(packId);
+  const last = lastPromptByVoter.get(voterId);
+  for (let i = 0; i < 6 && pick.prompt === last; i++) pick = randomPrompt(packId);
+  const { pack, prompt } = pick;
+  lastPromptByVoter.set(voterId, prompt);
 
-  // Source the human answer: a queued real one for this prompt that the *current*
-  // player did NOT write (so they can't recognize/rig their own answer), else a seed.
+  // Source the human answer, in order of preference:
+  //  1. a queued real answer from another player (hider mode),
+  //  2. a hand-written seed for this prompt,
+  //  3. a freshly generated human-style answer (so any prompt plays fair, even new ones).
   const qIdx = humanQueue.findIndex((h) => h.prompt === prompt && h.by !== voterId);
   let humanText: string;
   let humanBy: string | undefined;
@@ -51,12 +61,15 @@ export async function createDetectorRound(packId: string, voterId = "anon"): Pro
     // Retire the answer once it has been shown to enough detectors, so a planted
     // answer can't be farmed indefinitely.
     if (picked.uses >= MAX_HUMAN_USES) humanQueue.splice(qIdx, 1);
-  } else {
+  } else if (SEED_HUMANS[prompt]?.length) {
     humanText = seedHuman(prompt);
+  } else {
+    humanText = await generateHumanAnswer(prompt);
   }
 
   const personas = drawPersonas(TABLE_SIZE - 1);
-  const aiAnswers = await askAll(personas, prompt, true);
+  // Pass the human answer so the AIs avoid echoing it too.
+  const aiAnswers = await askAll(personas, prompt, true, [humanText]);
 
   const raw: Answer[] = [
     { seat: -1, text: humanText, isHuman: true },
