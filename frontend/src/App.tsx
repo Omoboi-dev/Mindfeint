@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Users,
@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   Wallet,
-  Loader2
+  Loader2,
+  Map
 } from "lucide-react";
 
 import { AppState, PromptPack, PublicRound, Reveal, PlayerStats, GameHistoryEntry } from "./types";
@@ -29,6 +30,7 @@ import HowToPlay from "./components/HowToPlay";
 import About from "./components/About";
 import HistoryPage from "./components/HistoryPage";
 import LoginScreen from "./components/LoginScreen";
+import Roadmap from "./components/Roadmap";
 import { useAuth } from "./auth/useAuth";
 
 export default function App() {
@@ -60,6 +62,30 @@ export default function App() {
   // it was cancelled so it doesn't yank the player back into the table.
   const reqSeq = useRef(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [shaking, setShaking] = useState(false);
+  const [confetti, setConfetti] = useState<{id:number;x:number;color:string}[]>([]);
+  const confettiId = useRef(0);
+
+  // Scroll detection for header elevation
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Confetti burst helper
+  const triggerConfetti = useCallback(() => {
+    const colors = ['#8B7FFF','#00D4FF','#00F5A0','#F59E0B','#FF4D6D'];
+    const burst = Array.from({ length: 28 }, (_, i) => ({
+      id: confettiId.current++,
+      x: 20 + Math.random() * 60,
+      color: colors[i % colors.length],
+    }));
+    setConfetti(burst);
+    setTimeout(() => setConfetti([]), 1200);
+  }, []);
+
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -309,33 +335,66 @@ export default function App() {
       {/* Absolute background cyber grid lines */}
       <div className="absolute inset-0 cyber-scanlines opacity-15 pointer-events-none" />
 
-      {/* Primary header branding matching Immersive UI exactly */}
-      <header className="h-16 flex items-center justify-between px-4 sm:px-6 md:px-8 border-b border-white/5 bg-black/40 backdrop-blur-md relative z-10 mx-3 sm:mx-4 rounded-xl">
-        <div className="flex items-center space-x-3 cursor-pointer select-none" onClick={goHome}>
-          <div className="w-8 h-8 bg-brand-violet rounded flex items-center justify-center shadow-[0_0_15px_rgba(124,108,255,0.4)]">
-            <span className="text-black font-black text-xl font-display">M</span>
+      {/* ── Elite Header HUD ── */}
+      <header className={`h-16 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-10 transition-all duration-300 ${
+        scrolled
+          ? 'border-b border-brand-violet/10 bg-black/70 backdrop-blur-2xl shadow-[0_1px_0_rgba(139,127,255,0.08)]'
+          : 'border-b border-white/5 bg-black/40 backdrop-blur-md'
+      } mx-3 sm:mx-4 rounded-xl`}>
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 cursor-pointer select-none group" onClick={goHome}>
+          <div className="relative w-8 h-8">
+            <div className="absolute inset-0 rounded-md bg-brand-violet/30 blur-md group-hover:bg-brand-violet/50 transition-colors" />
+            <div className="relative w-8 h-8 bg-brand-violet rounded-md flex items-center justify-center shadow-[0_0_20px_rgba(139,127,255,0.5)]">
+              <span className="text-black font-black text-xl font-display">M</span>
+            </div>
           </div>
-          <span className="text-sm sm:text-lg font-bold tracking-tighter text-white font-display">
+          <span className="text-sm sm:text-lg font-bold tracking-tighter text-white font-display hidden sm:block">
             MINDFEINT
           </span>
         </div>
 
-        {/* Primary nav */}
+        {/* Center nav with sliding indicator */}
         <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
-          <button onClick={goHome} className={navCls(appState === "LOBBY")}>Home</button>
-          <button onClick={() => navTo("HOWTO")} className={navCls(appState === "HOWTO")}>How to Play</button>
-          <button onClick={() => navTo("HISTORY")} className={navCls(appState === "HISTORY")}>History</button>
-          <button onClick={() => navTo("ABOUT")} className={navCls(appState === "ABOUT")}>About</button>
+          {([
+            { label: 'Home',        state: 'LOBBY'   },
+            { label: 'How to Play', state: 'HOWTO'   },
+            { label: 'Roadmap',     state: 'ROADMAP' },
+            { label: 'History',     state: 'HISTORY' },
+            { label: 'About',       state: 'ABOUT'   },
+          ] as { label: string; state: AppState }[]).map((item) => (
+            <button
+              key={item.state}
+              onClick={() => navTo(item.state)}
+              className={`relative px-3 py-1.5 rounded-lg text-xs font-mono font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                appState === item.state
+                  ? 'text-white'
+                  : 'text-text-muted hover:text-white hover:bg-white/5'
+              }`}
+            >
+              {appState === item.state && (
+                <motion.div
+                  layoutId="nav-pill"
+                  className="absolute inset-0 bg-brand-violet/15 border border-brand-violet/30 rounded-lg"
+                  transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                />
+              )}
+              <span className="relative z-10">{item.label}</span>
+            </button>
+          ))}
         </nav>
 
-        <div className="flex items-center space-x-3 sm:space-x-4 md:space-x-6">
+        {/* Right cluster */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* 0G Live */}
           <div className="hidden sm:flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse"></span>
-            <span className="text-xs font-mono text-brand-green">0G-GALILEO_LIVE</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-green animate-pulse shadow-[0_0_6px_rgba(0,245,160,0.8)]" />
+            <span className="text-[10px] font-mono text-brand-green tracking-wider">0G_LIVE</span>
           </div>
-          <div className="h-6 w-px bg-white/10 hidden md:block"></div>
+          <div className="h-5 w-px bg-white/8 hidden md:block" />
 
-          {/* ── Smart wallet badge ── */}
+          {/* Wallet badge */}
           {walletAddress ? (
             <div className="hidden md:flex items-center gap-1.5 bg-brand-violet/10 border border-brand-violet/20 px-2.5 py-1 rounded-full">
               <Wallet className="w-3 h-3 text-brand-violet" />
@@ -345,12 +404,12 @@ export default function App() {
             </div>
           ) : walletLoading ? (
             <div className="hidden md:flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
-              <Loader2 className="w-3 h-3 text-gray-500 animate-spin" />
-              <span className="text-[10px] font-mono text-gray-500">provisioning…</span>
+              <Loader2 className="w-3 h-3 text-text-muted animate-spin" />
+              <span className="text-[10px] font-mono text-text-muted">wallet…</span>
             </div>
           ) : null}
 
-          {/* ── User avatar (click to open menu) ── */}
+          {/* User avatar + dropdown (click to open) */}
           <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setUserMenuOpen((o) => !o)}
@@ -360,103 +419,122 @@ export default function App() {
               {user.photoURL ? (
                 <img
                   src={user.photoURL}
-                  alt={user.displayName ?? "Player"}
-                  className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-colors ${
-                    userMenuOpen ? "border-brand-violet" : "border-brand-violet/40 hover:border-brand-violet"
+                  alt={user.displayName ?? 'Player'}
+                  className={`w-8 h-8 rounded-full border-2 cursor-pointer transition-all shadow-[0_0_10px_rgba(139,127,255,0.2)] ${
+                    userMenuOpen ? "border-brand-violet" : "border-brand-violet/30 hover:border-brand-violet"
                   }`}
                 />
               ) : (
-                <div className="w-8 h-8 rounded-full bg-brand-violet/20 border-2 border-brand-violet/40 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold">
-                  {(user.displayName ?? user.email ?? "?")[0].toUpperCase()}
+                <div className={`w-8 h-8 rounded-full bg-brand-violet/20 border-2 flex items-center justify-center cursor-pointer text-brand-violet text-xs font-bold transition-all ${
+                  userMenuOpen ? "border-brand-violet" : "border-brand-violet/30 hover:border-brand-violet"
+                }`}>
+                  {(user.displayName ?? user.email ?? '?')[0].toUpperCase()}
                 </div>
               )}
             </button>
 
-            {userMenuOpen && (
-              <div className="absolute right-0 top-11 flex flex-col bg-black/90 backdrop-blur-xl border border-white/10 rounded-xl p-3 shadow-2xl min-w-[180px] z-50 gap-1">
-                <p className="text-xs font-semibold text-white truncate px-1 pb-2 border-b border-white/10">
-                  {user.displayName ?? user.email ?? "Player"}
-                </p>
-                <button
-                  onClick={() => { setUserMenuOpen(false); signOut(); }}
-                  id="btn-sign-out"
-                  className="flex items-center gap-2 text-xs text-gray-400 hover:text-red-400 px-1 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors cursor-pointer font-mono"
+            <AnimatePresence>
+              {userMenuOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-0 top-11 flex flex-col bg-black/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-[0_20px_60px_rgba(0,0,0,0.8)] min-w-[200px] z-50 gap-1"
                 >
-                  <LogOut className="w-3.5 h-3.5" /> Sign Out
-                </button>
-              </div>
-            )}
+                  <p className="text-xs font-semibold text-white truncate px-2 pb-2 border-b border-white/8 mb-1">
+                    {user.displayName ?? user.email ?? 'Player'}
+                  </p>
+                  {walletAddress && (
+                    <p className="text-[9px] font-mono text-brand-violet px-2 pb-1 truncate">
+                      {walletAddress.slice(0,8)}…{walletAddress.slice(-6)}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => { setUserMenuOpen(false); signOut(); }}
+                    id="btn-sign-out"
+                    className="flex items-center gap-2 text-xs text-text-secondary hover:text-brand-red px-2 py-2 rounded-xl hover:bg-red-500/8 transition-all cursor-pointer font-mono"
+                  >
+                    <LogOut className="w-3.5 h-3.5" /> Sign Out
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {appState !== "LOBBY" && (
+          {appState !== 'LOBBY' && (
             <button
               onClick={goHome}
-              className="hidden sm:flex bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white px-3 py-1 rounded-full text-xs font-mono font-semibold uppercase transition-all cursor-pointer items-center gap-1"
+              className="hidden sm:flex bg-white/5 hover:bg-white/10 border border-white/10 text-text-muted hover:text-white px-3 py-1 rounded-full text-xs font-mono font-semibold uppercase transition-all cursor-pointer items-center gap-1"
             >
-              <LogOut className="w-3" /> Leave
+              <LogOut className="w-3" /> Exit
             </button>
           )}
-          {/* Mobile menu toggle */}
+
           <button
             onClick={() => setMenuOpen((o) => !o)}
-            className="md:hidden text-gray-300 hover:text-white p-1.5 -mr-1 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+            className="md:hidden text-text-muted hover:text-white p-1.5 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
             aria-label="Menu"
           >
-            {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <AnimatePresence mode="wait" initial={false}>
+              {menuOpen
+                ? <motion.div key="x" initial={{rotate:-90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:90,opacity:0}} transition={{duration:0.15}}><X className="w-5 h-5" /></motion.div>
+                : <motion.div key="m" initial={{rotate:90,opacity:0}} animate={{rotate:0,opacity:1}} exit={{rotate:-90,opacity:0}} transition={{duration:0.15}}><Menu className="w-5 h-5" /></motion.div>
+              }
+            </AnimatePresence>
           </button>
         </div>
       </header>
 
-      {/* Mobile dropdown menu */}
-      {menuOpen && (
-        <div className="md:hidden relative z-20 mx-3 sm:mx-4 mt-2 bg-black/80 backdrop-blur-md border border-white/10 rounded-xl p-2 flex flex-col gap-1">
-          {/* Mobile user info strip */}
-          <div className="flex items-center gap-3 px-4 py-2.5 border-b border-white/10 mb-1">
-            {user.photoURL ? (
-              <img src={user.photoURL} alt="" className="w-7 h-7 rounded-full border border-brand-violet/40" />
-            ) : (
-              <div className="w-7 h-7 rounded-full bg-brand-violet/20 border border-brand-violet/40 flex items-center justify-center text-brand-violet text-xs font-bold">
-                {(user.displayName ?? "?")[0].toUpperCase()}
-              </div>
-            )}
-            <div className="flex flex-col min-w-0">
-              <span className="text-xs font-semibold text-white truncate">{user.displayName ?? user.email}</span>
-              {walletAddress && (
-                <span className="text-[10px] font-mono text-brand-violet truncate">
-                  {walletAddress.slice(0, 6)}…{walletAddress.slice(-4)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {[
-            { label: "Home", state: "LOBBY" as AppState },
-            { label: "How to Play", state: "HOWTO" as AppState },
-            { label: "History", state: "HISTORY" as AppState },
-            { label: "About", state: "ABOUT" as AppState },
-          ].map((item) => (
-            <button
-              key={item.state}
-              onClick={() => navTo(item.state)}
-              className={`text-left px-4 py-2.5 rounded-lg text-sm font-mono font-semibold uppercase tracking-wider transition-colors cursor-pointer ${
-                appState === item.state
-                  ? "text-brand-violet bg-brand-violet/10"
-                  : "text-gray-300 hover:text-white hover:bg-white/5"
-              }`}
-            >
-              {item.label}
-            </button>
-          ))}
-
-          {/* Mobile sign-out */}
-          <button
-            onClick={() => { signOut(); setMenuOpen(false); }}
-            className="flex items-center gap-2 text-left px-4 py-2.5 rounded-lg text-sm font-mono text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer mt-1 border-t border-white/10"
+      {/* ── Mobile Dropdown Menu ── */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="md:hidden relative z-20 mx-3 sm:mx-4 mt-2 bg-black/90 backdrop-blur-2xl border border-white/10 rounded-2xl p-3 flex flex-col gap-1 shadow-[0_20px_60px_rgba(0,0,0,0.7)]"
           >
-            <LogOut className="w-4 h-4" /> Sign Out
-          </button>
-        </div>
-      )}
+            {/* User strip */}
+            <div className="flex items-center gap-3 px-3 py-3 border-b border-white/8 mb-1">
+              {user.photoURL
+                ? <img src={user.photoURL} alt="" className="w-9 h-9 rounded-full border border-brand-violet/30 shadow-[0_0_10px_rgba(139,127,255,0.2)]" />
+                : <div className="w-9 h-9 rounded-full bg-brand-violet/20 border border-brand-violet/30 flex items-center justify-center text-brand-violet text-sm font-bold">{(user.displayName ?? '?')[0].toUpperCase()}</div>
+              }
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{user.displayName ?? user.email}</p>
+                {walletAddress && <p className="text-[9px] font-mono text-brand-violet truncate mt-0.5">{walletAddress.slice(0,8)}…{walletAddress.slice(-6)}</p>}
+              </div>
+            </div>
+
+            {([
+              { label: 'Home',        state: 'LOBBY'   },
+              { label: 'How to Play', state: 'HOWTO'   },
+              { label: 'Roadmap',     state: 'ROADMAP' },
+              { label: 'History',     state: 'HISTORY' },
+              { label: 'About',       state: 'ABOUT'   },
+            ] as { label: string; state: AppState }[]).map((item) => (
+              <button
+                key={item.state}
+                onClick={() => navTo(item.state)}
+                className={`text-left px-4 py-2.5 rounded-xl text-sm font-mono font-semibold uppercase tracking-wider transition-all cursor-pointer ${
+                  appState === item.state ? 'text-brand-violet bg-brand-violet/10 border border-brand-violet/20' : 'text-text-secondary hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+
+            <button
+              onClick={() => { signOut(); setMenuOpen(false); }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-mono text-brand-red hover:bg-red-500/8 transition-all cursor-pointer mt-1 border-t border-white/8"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main Container Layout — center short screens (lobby), top-align tall ones
           (table/reveal/waiting) so their tops don't get clipped under the navbar. */}
@@ -467,74 +545,126 @@ export default function App() {
       >
         <AnimatePresence mode="wait">
           
-          {/* LOBBY / MODE SELECT */}
+          {/* ── LOBBY / HERO ── */}
           {appState === "LOBBY" && (
             <motion.div
               key="lobby"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="space-y-8 max-w-4xl mx-auto w-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="space-y-10 max-w-5xl mx-auto w-full"
             >
-              {/* Marketing Tagline Segment */}
-              <div className="text-center py-6">
+              {/* Hero Section */}
+              <div className="text-center py-8 relative">
+                {/* Ambient glow behind headline */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-48 bg-brand-violet/10 blur-[80px] rounded-full pointer-events-none" />
+
                 <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="inline-flex items-center gap-1.5 bg-brand-violet/10 border border-brand-violet/20 text-brand-violet text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-[0.15em] mb-6"
+                >
+                  <Sparkles className="w-3 h-3" /> Blockchain-Grade Turing Test
+                </motion.div>
+
+                <motion.h1
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.18, duration: 0.6, ease: [0.22,1,0.36,1] }}
+                  className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight font-display leading-none mb-4 relative"
+                >
+                  <span className="text-white">One of them</span>
+                  <br />
+                  <span className="text-gradient-violet">is real.</span>
+                </motion.h1>
+
+                <motion.p
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="inline-flex items-center gap-1 bg-brand-violet/10 border border-brand-violet/20 text-brand-violet text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest mb-4"
+                  transition={{ delay: 0.35 }}
+                  className="text-text-secondary max-w-lg mx-auto text-base leading-relaxed mt-3"
                 >
-                  <Sparkles className="w-3" /> Blockchain-grade Turing Test
-                </motion.div>
-                <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-white font-display mb-3">
-                  One of them is a real person.
-                </h2>
-                <h3 className="text-xl md:text-2xl text-brand-violet font-medium">
-                  The rest are <span className="underline decoration-brand-blue font-mono font-bold tracking-tight">provably-real</span> AIs.
-                </h3>
-                <p className="text-gray-400 max-w-xl mx-auto text-sm mt-4">
-                  Identify who is human from 6 short answers. Every AI answer is produced by a real model on 0G verifiable inference and signed inside a TEE, then the whole round is recorded on 0G Storage and Chain — provably fair.
-                </p>
+                  Six answers. Five AIs. One human. Every AI response is cryptographically signed inside a TEE on 0G — provably real, provably untampered.
+                </motion.p>
               </div>
 
-              {/* Mode Choosing Buttons Grid */}
+              {/* Live Stats Ticker */}
+              <div className="w-full overflow-hidden border-y border-white/5 py-2.5 bg-black/20">
+                <div className="ticker-track">
+                  {[...Array(2)].map((_, ri) => (
+                    <div key={ri} className="flex gap-12 items-center">
+                      {[
+                        { label: 'ROUNDS PLAYED', value: stats.roundsPlayed.toLocaleString() },
+                        { label: 'HUMANS SPOTTED', value: stats.humansSpotted.toLocaleString() },
+                        { label: 'AI VERIFIED', value: (stats.roundsPlayed * 5).toLocaleString() },
+                        { label: 'ON-CHAIN TXS', value: (stats.roundsPlayed * 2).toLocaleString() },
+                        { label: 'CURRENT STREAK', value: `${stats.currentStreak}` },
+                        { label: 'BEST STREAK', value: `${stats.highestStreak}` },
+                        { label: '0G NETWORK', value: 'GALILEO LIVE' },
+                      ].map((item) => (
+                        <span key={item.label} className="flex items-center gap-3 shrink-0">
+                          <span className="text-[9px] font-mono text-text-muted tracking-[0.15em] uppercase">{item.label}</span>
+                          <span className="text-[10px] font-mono font-bold text-brand-cyan">{item.value}</span>
+                          <span className="w-px h-3 bg-white/10" />
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Mode Cards — 3D tilt on hover */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
-                
-                {/* Detector Mode Choice card */}
+                {/* Detector card */}
                 <motion.div
-                  whileHover={{ y: -4 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden group cursor-pointer hover:border-brand-violet/85 hover:bg-white/[0.08] transition-all"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.25, duration: 0.55, ease: [0.22,1,0.36,1] }}
+                  whileHover={{ y: -6, rotateX: 3, rotateY: -3 }}
+                  style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+                  className="glass-card p-7 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-brand-violet/40 transition-all shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
                   onClick={() => handleStartDetector(selectedPack)}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-violet/5 rounded-full blur-2xl pointer-events-none group-hover:bg-brand-violet/10 transition-colors" />
-                  <div className="w-12 h-12 rounded-xl bg-brand-violet/10 border border-brand-violet/20 flex items-center justify-center text-brand-violet mb-4 shadow-[0_0_15px_rgba(124,108,255,0.15)]">
-                    <Eye className="w-6 h-6" />
-                  </div>
-                  <h4 className="text-xl font-bold font-display text-white mb-2">Detector Mode</h4>
-                  <p className="text-gray-400 text-xs mb-6 leading-relaxed">
-                    Read 6 randomized responses, find the lone human, then check the 0G proofs that each AI answer really came from a genuine model, untampered.
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 text-xs text-brand-violet font-bold font-mono group-hover:text-white transition-colors">
-                    COMMENCE DETECTION <ArrowRight className="w-3.5 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 neural-grid opacity-30 rounded-2xl pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-brand-violet/8 rounded-full blur-3xl pointer-events-none group-hover:bg-brand-violet/15 transition-colors" />
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-brand-violet/12 border border-brand-violet/25 flex items-center justify-center text-brand-violet mb-5 group-hover:shadow-[0_0_25px_rgba(139,127,255,0.3)] transition-shadow">
+                      <Eye className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-2xl font-bold font-display text-white mb-2">Detector Mode</h3>
+                    <p className="text-text-secondary text-sm leading-relaxed mb-6">
+                      Six answers. One human. Identify which response is real, then verify the 0G cryptographic proofs on every AI seat.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-brand-violet font-bold font-mono group-hover:gap-3 transition-all">
+                      COMMENCE DETECTION <ArrowRight className="w-4" />
+                    </div>
                   </div>
                 </motion.div>
- 
-                {/* Hider Mode Choice card */}
+
+                {/* Hider card */}
                 <motion.div
-                  whileHover={{ y: -4 }}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-2xl relative overflow-hidden group cursor-pointer hover:border-brand-green/85 hover:bg-white/[0.08] transition-all"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.35, duration: 0.55, ease: [0.22,1,0.36,1] }}
+                  whileHover={{ y: -6, rotateX: 3, rotateY: 3 }}
+                  style={{ transformStyle: 'preserve-3d', perspective: '1000px' }}
+                  className="glass-card p-7 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-brand-green/40 transition-all shadow-[0_8px_40px_rgba(0,0,0,0.4)]"
                   onClick={handleStartHider}
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-brand-green/5 rounded-full blur-2xl pointer-events-none group-hover:bg-brand-green/10 transition-colors" />
-                  <div className="w-12 h-12 rounded-xl bg-brand-green/10 border border-brand-green/20 flex items-center justify-center text-brand-green mb-4 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
-                    <UserCheck className="w-6 h-6" />
-                  </div>
-                  <h4 className="text-xl font-bold font-display text-white mb-2">Hider Mode</h4>
-                  <p className="text-gray-400 text-xs mb-6 leading-relaxed">
-                    Be the human. Submit your own answers to prompts so they can be securely shuffled into rounds played globally by other detectors. Help prove AI can't mock us!
-                  </p>
-                  <div className="inline-flex items-center gap-1.5 text-xs text-brand-green font-bold font-mono group-hover:text-white transition-colors">
-                    BLENDED ANONYMOUSLY <ArrowRight className="w-3.5 group-hover:translate-x-1 transition-transform" />
+                  <div className="absolute inset-0 neural-grid-cyan opacity-25 rounded-2xl pointer-events-none" />
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-brand-green/5 rounded-full blur-3xl pointer-events-none group-hover:bg-brand-green/12 transition-colors" />
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-brand-green/12 border border-brand-green/25 flex items-center justify-center text-brand-green mb-5 group-hover:shadow-[0_0_25px_rgba(0,245,160,0.3)] transition-shadow">
+                      <UserCheck className="w-7 h-7" />
+                    </div>
+                    <h3 className="text-2xl font-bold font-display text-white mb-2">Hider Mode</h3>
+                    <p className="text-text-secondary text-sm leading-relaxed mb-6">
+                      Be the human. Write an answer that blends in with the AIs. Your response gets shuffled anonymously into live rounds worldwide.
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-brand-green font-bold font-mono group-hover:gap-3 transition-all">
+                      GO UNDERCOVER <ArrowRight className="w-4" />
+                    </div>
                   </div>
                 </motion.div>
               </div>
@@ -631,49 +761,63 @@ export default function App() {
                 )}
               </AnimatePresence>
 
-              {/* Suspect Answers Grid matching Immersive style */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-                {activeRound.seats.map((seat) => {
+              {/* Suspect Answers Grid — 3D tilt cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+                {activeRound.seats.map((seat, idx) => {
                   const isChosen = selectedSeat === seat.seat;
                   return (
                     <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.06, duration: 0.4, ease: [0.22,1,0.36,1] }}
+                      whileHover={{ y: -4, rotateX: 2, rotateY: isChosen ? 0 : -2 }}
+                      whileTap={{ scale: 0.97 }}
+                      style={{ transformStyle: 'preserve-3d', perspective: '800px' }}
                       key={seat.seat}
                       onClick={() => setSelectedSeat(seat.seat)}
-                      className={`group relative rounded-2xl p-6 flex flex-col justify-between min-h-[180px] transition-all cursor-pointer border ${
+                      className={`group relative rounded-2xl p-6 flex flex-col justify-between min-h-[200px] cursor-pointer border transition-all ${
                         isChosen
-                          ? "bg-brand-violet/10 border-2 border-brand-violet shadow-[0_0_30px_rgba(124,108,255,0.15)] text-white"
-                          : "bg-white/5 border-white/10 hover:border-brand-violet/50 hover:bg-white/[0.08] text-gray-300"
+                          ? 'bg-brand-violet/10 border-brand-violet shadow-[0_0_40px_rgba(139,127,255,0.2)]'
+                          : 'glass-card hover:border-brand-violet/35'
                       }`}
                     >
-                      {/* Top seating label */}
-                      <div className="absolute top-4 right-4">
-                        <span className={`text-[9px] font-mono uppercase tracking-widest font-bold ${
-                          isChosen ? "text-brand-violet" : "text-gray-500 opacity-60"
-                        }`}>
-                          {isChosen ? `SEAT_0${seat.seat + 1}_SELECTED` : `SEAT_0${seat.seat + 1}`}
-                        </span>
+                      {/* Ghost seat number */}
+                      <div className="absolute bottom-4 right-4 text-[64px] font-black font-display leading-none text-white/[0.03] select-none pointer-events-none">
+                        0{seat.seat + 1}
                       </div>
 
-                      {/* Content block */}
-                      <p className="text-sm leading-relaxed text-gray-200 font-sans pr-4 mt-6 flex-1">
+                      {/* Seat label */}
+                      <div className="flex items-center justify-between mb-4">
+                        <span className={`text-[9px] font-mono uppercase tracking-[0.2em] font-bold ${
+                          isChosen ? 'text-brand-violet' : 'text-text-muted'
+                        }`}>
+                          SEAT 0{seat.seat + 1}
+                        </span>
+                        {isChosen && (
+                          <motion.span
+                            initial={{ opacity:0, scale:0.8 }}
+                            animate={{ opacity:1, scale:1 }}
+                            className="text-[8px] font-mono font-bold uppercase tracking-widest bg-brand-violet/20 border border-brand-violet/40 text-brand-violet px-2 py-0.5 rounded-full"
+                          >
+                            SUSPECT LOCKED
+                          </motion.span>
+                        )}
+                      </div>
+
+                      <p className="text-sm leading-relaxed text-text-primary font-sans flex-1">
                         {seat.text}
                       </p>
 
-                      {/* Card partition footer */}
-                      <div className="mt-6 pt-4 border-t border-white/5 flex justify-between items-center text-[10px] font-mono uppercase">
-                        <span className={isChosen ? "text-brand-violet font-semibold" : "text-gray-500"}>
-                          {isChosen ? "Suspect Selected" : "Ready to locks"}
+                      <div className="mt-5 pt-3 border-t border-white/5 flex justify-between items-center">
+                        <span className={`text-[9px] font-mono uppercase tracking-wider ${
+                          isChosen ? 'text-brand-violet' : 'text-text-muted'
+                        }`}>
+                          {isChosen ? 'Suspect Selected' : 'Tap to suspect'}
                         </span>
-                        {isChosen ? (
-                          <div className="flex space-x-1">
-                            <span className="w-1 h-3 bg-brand-violet animate-pulse inline-block"></span>
-                            <span className="w-1 h-3 bg-brand-violet animate-pulse inline-block"></span>
-                          </div>
-                        ) : (
-                          <div className="w-2 h-2 rounded-full bg-white/20"></div>
-                        )}
+                        {isChosen
+                          ? <div className="flex gap-0.5"><span className="w-0.5 h-3 bg-brand-violet animate-pulse" /><span className="w-0.5 h-3 bg-brand-violet animate-pulse" /></div>
+                          : <div className="w-2 h-2 rounded-full bg-white/15" />
+                        }
                       </div>
                     </motion.div>
                   );
@@ -718,22 +862,59 @@ export default function App() {
             </motion.div>
           )}
 
-          {/* REVEAL SCREEN */}
+          {/* ── REVEAL SCREEN — Cinematic 3-act ── */}
           {appState === "REVEAL" && votingResult && activeRound && (
             <motion.div
               key="reveal-screen"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="max-w-4xl mx-auto w-full space-y-8"
+              onAnimationComplete={() => {
+                // Trigger confetti or shake after reveal mounts
+                if (votingResult.correct) {
+                  triggerConfetti();
+                } else {
+                  setShaking(true);
+                  setTimeout(() => setShaking(false), 600);
+                }
+              }}
+              className={`max-w-4xl mx-auto w-full space-y-8 ${shaking ? 'screen-shake' : ''}`}
             >
+              {/* Confetti layer */}
+              <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+                {confetti.map((p) => (
+                  <div
+                    key={p.id}
+                    className="confetti-particle absolute w-2 h-2 rounded-sm"
+                    style={{
+                      left: `${p.x}%`,
+                      top: '-10px',
+                      backgroundColor: p.color,
+                      animationDelay: `${Math.random() * 0.3}s`,
+                    }}
+                  />
+                ))}
+              </div>
+
               <div className="text-center">
-                <span className="font-mono text-xs text-brand-violet uppercase tracking-widest font-semibold block">
+                <motion.span
+                  initial={{ opacity:0, y:-8 }}
+                  animate={{ opacity:1, y:0 }}
+                  transition={{ delay: 0.1 }}
+                  className="font-mono text-xs text-text-muted uppercase tracking-[0.2em] font-semibold block mb-2"
+                >
                   Identity Unsealed
-                </span>
-                <h2 className="text-3xl font-bold font-display text-white mt-1">
-                  The Decentralized Cover Blown
-                </h2>
+                </motion.span>
+                <motion.h2
+                  initial={{ opacity:0, scale:0.92 }}
+                  animate={{ opacity:1, scale:1 }}
+                  transition={{ delay: 0.15, duration: 0.5, ease:[0.22,1,0.36,1] }}
+                  className={`text-4xl md:text-5xl font-extrabold font-display tracking-tight ${
+                    votingResult.correct ? 'text-gradient-cyan' : 'text-brand-red'
+                  }`}
+                >
+                  {votingResult.correct ? 'Human Identified.' : 'AI Won This Round.'}
+                </motion.h2>
               </div>
 
               {/* Verdict Card Social Shareable block */}
@@ -1018,14 +1199,32 @@ export default function App() {
             </motion.div>
           )}
 
+          {/* ROADMAP */}
+          {appState === "ROADMAP" && (
+            <motion.div key="roadmap" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+              <Roadmap onBack={goHome} />
+            </motion.div>
+          )}
+
         </AnimatePresence>
       </main>
 
-      {/* Footer system details */}
-      <footer className="border-t border-dark-border/40 py-4 px-6 text-center text-[10px] font-mono text-gray-500 bg-dark-bg/60 relative z-10">
-        <div>
-          <span>MINDFEINT Social Deduction © 2026 • Powered by </span>
-          <b className="text-gray-400">0G Verifiable Inference Protocol & 0G Storage Nodes</b>
+      {/* ── Footer ── */}
+      <footer className="border-t border-white/5 py-5 px-6 relative z-10 mt-4">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 bg-brand-violet rounded flex items-center justify-center">
+              <span className="text-black font-black text-xs font-display">M</span>
+            </div>
+            <span className="text-[10px] font-mono text-text-muted">MINDFEINT © 2026</span>
+          </div>
+          <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+            <span className="flex items-center gap-1.5"><span className="w-1 h-1 rounded-full bg-brand-green animate-pulse" />0G GALILEO TESTNET</span>
+            <span>·</span>
+            <span>TEE-ATTESTED INFERENCE</span>
+            <span>·</span>
+            <span>ERC-4337 WALLETS</span>
+          </div>
         </div>
       </footer>
     </div>
