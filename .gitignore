@@ -5,3 +5,8 @@ dist/
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Local-only working docs (not part of the public repo)
+TASKS/
+IMPLEMENTATION.md
+FRONTEND_BRIEF.md
