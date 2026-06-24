@@ -99,9 +99,10 @@ export default function WaitingScreen({ prompt, packName, onCancel }: WaitingScr
     return () => clearInterval(interval);
   }, []);
 
-  /* ── Scroll terminal ─────────────────────────────────────────────────── */
+  /* ── Scroll terminal (only the log box, never the whole page) ─────────── */
   useEffect(() => {
-    terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const box = terminalEndRef.current?.parentElement;
+    if (box) box.scrollTop = box.scrollHeight;
   }, [logs]);
 
   const humanLinked = logIndex > 7;
