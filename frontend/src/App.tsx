@@ -74,6 +74,13 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  // After every view change, jump to the top AFTER the new view has rendered, so the
+  // header is never left half-scrolled when returning from a tall page.
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    setScrolled(false);
+  }, [appState]);
+
   // Confetti burst helper
   const triggerConfetti = useCallback(() => {
     const colors = ['#8B7FFF','#00D4FF','#00F5A0','#F59E0B','#FF4D6D'];
@@ -337,7 +344,7 @@ export default function App() {
       <div className="absolute inset-0 cyber-scanlines opacity-15 pointer-events-none" />
 
       {/* ── Elite Header HUD ── */}
-      <header className={`h-16 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-10 transition-all duration-300 ${
+      <header className={`h-16 flex items-center justify-between px-4 sm:px-6 md:px-8 relative z-30 transition-all duration-300 ${
         scrolled
           ? 'border-b border-brand-violet/10 bg-black/70 backdrop-blur-2xl shadow-[0_1px_0_rgba(139,127,255,0.08)]'
           : 'border-b border-white/5 bg-black/40 backdrop-blur-md'
@@ -541,7 +548,7 @@ export default function App() {
           (table/reveal/waiting) so their tops don't get clipped under the navbar. */}
       <main
         className={`flex-1 max-w-6xl w-full mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col relative z-10 ${
-          appState === "LOBBY" || appState === "HIDER_SUCCESS" ? "justify-center" : "justify-start"
+          appState === "HIDER_SUCCESS" ? "justify-center" : "justify-start"
         }`}
       >
         <AnimatePresence mode="wait">
