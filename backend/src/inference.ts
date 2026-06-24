@@ -175,6 +175,9 @@ async function askPersonaOnce(
   // Strip surrounding quotes the model sometimes adds.
   text = text.replace(/^["'](.*)["']$/s, "$1").trim();
   if (!text) return null; // empty content → retry
+  // qwen sometimes code-switches into Chinese/Japanese/Korean mid-sentence. Reject any
+  // answer with CJK characters so the caller retries and we keep everything English.
+  if (/[　-〿぀-ヿ㐀-鿿가-힯＀-￯]/.test(text)) return null;
   // Keep it short so a rambling AI answer can't be spotted next to a tight human one.
   text = shorten(text);
 

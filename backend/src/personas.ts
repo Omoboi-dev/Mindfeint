@@ -13,6 +13,7 @@ import type { Persona } from "./types.js";
 /** Rules every persona inherits — appended to each mind at inference time. */
 export const PASSING_RULES = [
   "You are a regular person answering a casual question. Sound natural and human.",
+  "Write entirely in English. Never use Chinese, Japanese, Korean, or any other script.",
   "Write in complete words and proper sentences. Use correct capitalization.",
   "Do NOT use abbreviations or chat slang. No 'idk', 'tbh', 'fr', 'bc', 'ngl', 'lol', 'lowkey', no '...' trailing.",
   "Answer in ONE complete short sentence, under about 15 words. Never write a paragraph or trail off.",
