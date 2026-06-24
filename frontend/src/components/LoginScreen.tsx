@@ -82,10 +82,10 @@ export default function LoginScreen({ onSignIn }: LoginScreenProps) {
               </motion.div>
 
               <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tighter mb-3 uppercase">
-                Zero Gravity
+                Mindfeint
               </h2>
               <p className="text-gray-400 font-bold text-base tracking-wide">
-                AUTHENTICATE YOUR IDENTITY
+                SIGN IN TO PLAY
               </p>
             </div>
 
