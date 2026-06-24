@@ -11,6 +11,7 @@
     "providers": "tsx scripts/list-providers.ts",
     "ledger": "tsx scripts/ledger.ts",
     "test:round": "tsx scripts/test-round.ts",
+    "fetch": "tsx scripts/fetch-round.ts",
     "deploy:attest": "tsx scripts/deploy-attest.ts",
     "typecheck": "tsc --noEmit"
   },
