@@ -82,125 +82,124 @@ export const PACKS: PromptPack[] = [
 export const SEED_HUMANS: Record<string, string[]> = {
   // --- spicy ---
   "Defend a food opinion most people would hate you for.": [
-    "cold pizza is better than hot pizza and im not arguing about it",
-    "well done steak. yeah i said it",
-    "ketchup goes in the fridge and on eggs. this is not a debate",
+    "Cold pizza straight from the fridge beats a fresh hot slice, and I will defend that forever.",
+    "A well done steak is perfectly fine and I am tired of pretending it is a crime.",
   ],
   "What's a small thing that instantly makes you not trust someone?": [
-    "when they're rude to waiters. instant red flag",
-    "people who don't say thank you when you hold the door. who raised you",
+    "The way they treat a waiter tells me everything I need to know.",
+    "People who never say thank you when you hold the door open for them.",
   ],
   "What's an overrated thing everyone pretends to like?": [
-    "rooftop bars. it's just a normal bar but windy and twice the price",
-    "champagne. tastes like fancy regret",
+    "Rooftop bars. It is just a normal bar, only windier and twice the price.",
+    "Champagne, honestly. It tastes like expensive regret.",
   ],
   "What's a hill you'll die on that doesn't actually matter?": [
-    "pineapple does not belong on pizza and i won't be taking questions",
-    "a hotdog is not a sandwich. it's just not",
+    "Pineapple does not belong on pizza, and I will not be taking questions.",
+    "A hot dog is simply not a sandwich, and that is the end of it.",
   ],
   "If you were a color, why would you be the most disappointing color?": [
-    "i'd be beige. literally the color of wet cardboard, just making office walls look depressing",
-    "greige. not gray, not beige, just sad and committee-approved",
+    "Beige, because I would be the exact shade of a boring office wall.",
+    "A sad grey that can never quite decide what it wants to be.",
   ],
   "What is the worst advice you have ever received that you actually followed?": [
-    "\"just be yourself.\" did that in an interview and rambled about my soup can collection",
-    "someone said follow your passion so i quit a good job to sell candles. anyway",
+    "Someone told me to just be myself in an interview, and it went badly.",
+    "I was told to follow my passion, so I left a good job to sell candles.",
   ],
   "If humans had a software update, what is the first bug that needs to be patched?": [
-    "biting the inside of your own cheek while eating. why does my mouth attack itself",
-    "remembering something embarrassing from 10 years ago at 3am. patch that please",
+    "Biting the inside of your own cheek while eating. Why does my mouth attack itself?",
+    "Remembering an embarrassing moment from years ago at three in the morning.",
   ],
   "What industry is completely a scam, but we've accepted it as normal?": [
-    "printer ink. costs more than the printer, 3 drops of liquid, stops working if you blink",
-    "weddings. say the word wedding and every price magically triples",
+    "Printer ink. It costs more than the printer and runs out if you look at it.",
+    "Weddings. The moment you say the word, every price suddenly triples.",
   ],
   "What's something you do that you think is normal, but others find terrifying?": [
-    "i eat the skin off the top of hot chocolate. on purpose",
-    "i narrate my cat's inner thoughts out loud in a little voice. constantly",
+    "I hold full conversations with my pet, including their side of it.",
+    "I eat the skin off the top of my hot chocolate on purpose.",
   ],
   "If aliens visited, what of ours would be the hardest to explain to them?": [
-    "money. it's just paper we all agreed to care about",
-    "tiny dogs that can't survive outside and we love them more than most people",
+    "Money. It is just paper that we all quietly agreed to care about.",
+    "Tiny dogs that cannot survive outside, yet we adore them more than people.",
   ],
   // --- confess ---
   "What's a lie you tell yourself?": [
-    "that i'll start going to bed early. been saying that since 2019",
-    "i'll just watch one episode lol",
+    "That I will finally start going to bed early. I have said it for years.",
+    "That I will only watch one more episode and then go to sleep.",
   ],
   "What's something you do only when nobody's watching?": [
-    "practice conversations in the mirror like i'm on a talk show",
-    "eat snacks standing in front of the open fridge so it doesn't count",
+    "I practice conversations in the mirror as if I am on a talk show.",
+    "I eat snacks standing in front of the open fridge so they do not count.",
   ],
   "What's a petty thing that ruins your whole day?": [
-    "someone taking the parking spot i was clearly waiting for. ruined. day gone",
-    "getting left on read but they posted a story 2 min later. i see you",
+    "Someone taking the parking spot I was clearly waiting for.",
+    "Being left on read right after they post a story for everyone else.",
   ],
   "What's the most embarrassing thing in your search history (keep it light)?": [
-    "\"is cereal a soup\" at 2am. i needed answers",
-    "how to spell restaurant. every single time",
+    "I once searched whether cereal counts as a soup at two in the morning.",
+    "How to spell restaurant, basically every single time I need it.",
   ],
   // --- intellectual ---
   "Is there a limit to human understanding, or can we eventually comprehend everything?": [
-    "there's a limit for sure. try explaining taxes to a smart dog, then realize we're the dog to something else",
-    "we couldn't even agree what color that dress was so. pretty limited tbh",
+    "There is definitely a limit. We are probably some larger thing's confused puppy.",
+    "We cannot even agree on what color a dress is, so I would say fairly limited.",
   ],
   "If you could know the absolute truth to one question, what would you ask?": [
-    "is anyone actually thinking about me as much as i'm anxious they are. (probably not)",
-    "what actually happens after we die, just so i can stop spiraling about it",
+    "Whether anyone thinks about me as much as I anxiously assume they do.",
+    "What actually happens after we die, just so I can stop worrying about it.",
   ],
   "What does it mean to live a 'good' life in an era of digital noise?": [
-    "phone in another room and actual real conversations. touching grass unironically",
-    "honestly just being a little bored again sometimes. we lost that",
+    "Leaving the phone in another room and having real conversations again.",
+    "Being a little bored sometimes. I think we quietly lost that.",
   ],
   "Does free will exist, or are we just complex algorithms reacting to input?": [
-    "feels like free will but i also chose this exact snack again so. who knows",
-    "we're definitely just reacting to stuff, i just don't wanna think about it that hard",
+    "It feels like free will, yet I chose this exact snack again, so who knows.",
+    "We are probably just reacting to everything, but I prefer not to dwell on it.",
   ],
   "If we are living in a simulation, what are the most obvious glitches?": [
-    "deja vu obviously. that's them patching something",
-    "when you say a word so many times it stops sounding real. clearly a rendering bug",
+    "Deja vu, obviously. That is clearly them patching something in the background.",
+    "When a word stops sounding real after you repeat it too many times.",
   ],
   // --- casual ---
   "What's your ultimate comfort food, and why is it superior to all others?": [
-    "cold leftover pizza at 2am straight from the fridge. no plate, no microwave, just primal efficiency",
-    "buttered toast. sounds sad but it genuinely fixes everything",
+    "Cold leftover pizza at midnight. No plate, no microwave, just pure efficiency.",
+    "Buttered toast. It sounds plain, but it genuinely fixes a bad day.",
   ],
   "What's the best movie you will never watch again because it was too intense?": [
-    "uncut gems. great film, gave me an actual stress headache, never again",
-    "requiem for a dream. saw it once at 16, still not okay",
+    "Uncut Gems. A brilliant film that gave me an actual stress headache.",
+    "Requiem for a Dream. I saw it once as a teenager and never quite recovered.",
   ],
   "If your pet could talk for 10 seconds, what would they tell you?": [
-    "my dog would just scream WHERE WERE YOU for the whole 10 seconds",
-    "the cat would file a formal complaint about dinner being 4 minutes late",
+    "My dog would simply scream, asking where I have been all day.",
+    "The cat would file a formal complaint about dinner arriving four minutes late.",
   ],
   "What is a major trend today that will look ridiculous in 10 years?": [
-    "those giant water bottles people carry like it's a personality. we'll cringe",
-    "calling everything 'so demure'. it's already aging badly",
+    "The enormous water bottles people carry around like a personality trait.",
+    "Calling absolutely everything aesthetic. It is already starting to age badly.",
   ],
   "What is your secret useless talent that you are oddly proud of?": [
-    "i can fold a fitted sheet perfectly. completely useless but i'm proud",
-    "i always know what time it is within like 5 minutes. no idea how",
+    "I can fold a fitted sheet perfectly, which helps me in no real way.",
+    "I almost always know the time within five minutes without checking.",
   ],
   // --- scifi ---
   "You wake up in 2099. What's the first thing you Google to see what happened?": [
-    "checking if half-life 3 finally came out or if it's still in alpha",
-    "who won basically. and whether the bees are okay",
+    "Whether the bees are alright and who ended up winning everything.",
+    "If the game I had been waiting on finally came out, or it is still delayed.",
   ],
   "If you could replace any part of your body with cyberware, what would it be and why?": [
-    "eyes that don't get tired staring at screens all day",
-    "legs that don't ache after one (1) day at a theme park",
+    "Eyes that never get tired from staring at a screen all day.",
+    "Legs that do not ache after a single day of walking around a theme park.",
   ],
   "An AI offers to manage all your life decisions perfectly. Do you accept?": [
-    "no way. it'd be right and i'd resent it for being right",
-    "only if it does my taxes and texts people back. the rest i keep",
+    "No, because it would be right every time and I would resent it for that.",
+    "Only if it handles my taxes and replies to messages. I keep the rest.",
   ],
   "What is the first luxury item you'd buy if you were a successful space smuggler?": [
-    "a ship that doesn't make that noise right before it breaks. pure peace of mind",
-    "real coffee. not the freeze-dried space sludge",
+    "A ship that does not make that terrifying noise right before it breaks down.",
+    "Real coffee, not the freeze dried sludge they serve out there.",
   ],
   "If souls existed and could be backed up on a floppy disk, what file format would they be?": [
-    "definitely a .zip. compressed trauma and all",
-    "mine's a corrupted .txt that won't open right",
+    "A zip file, quietly compressing far too much baggage.",
+    "Mine would be a corrupted text file that refuses to open properly.",
   ],
 };
 

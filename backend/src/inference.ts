@@ -49,12 +49,12 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 // Distinct per-persona fallbacks so a failed call never shows as a duplicate line
 // (identical answers are a dead giveaway and make the table look broken).
 const FALLBACKS = [
-  "idk honestly, never really thought about it",
-  "hmm no clue, gonna pass on this one",
-  "eh i got nothing for this tbh",
-  "honestly couldn't tell you",
-  "no strong feelings either way",
-  "drawing a blank ngl",
+  "Honestly, I have never really thought about that.",
+  "No strong feelings on this one either way.",
+  "I could not tell you, this one is tricky.",
+  "I am drawing a complete blank here.",
+  "Not sure, I would have to think about it.",
+  "Nothing really comes to mind for this one.",
 ];
 
 function fallbackFor(persona: Persona): string {
