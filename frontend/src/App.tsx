@@ -234,6 +234,7 @@ export default function App() {
           humanSeat: revealData.humanSeat,
           correct: isCorrect,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          storageRoot: revealData.storageRoot ?? null,
           storageTx: revealData.storageTx ?? null,
           chainTx: revealData.chainTx ?? null,
         };

@@ -14,8 +14,12 @@ import {
   Target,
   Crosshair,
   BarChart3,
+  Play,
+  X,
+  Loader2,
+  ShieldCheck,
 } from "lucide-react";
-import type { GameHistoryEntry, PlayerStats } from "../types";
+import type { GameHistoryEntry, PlayerStats, StoredRound } from "../types";
 
 /* ─── tiny count-up hook ─────────────────────────────────────────── */
 function useCountUp(target: number, duration = 900): number {
@@ -89,8 +93,48 @@ export default function HistoryPage({
     ? Math.round((stats.humansSpotted / stats.roundsPlayed) * 100)
     : 0;
 
+  // Replay: download the saved round straight from 0G Storage and show it.
+  const [replayEntry, setReplayEntry] = useState<GameHistoryEntry | null>(null);
+  const [record, setRecord] = useState<StoredRound | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function openReplay(entry: GameHistoryEntry) {
+    if (!entry.storageRoot) return;
+    setReplayEntry(entry);
+    setRecord(null);
+    setError(null);
+    setLoading(true);
+    try {
+      const r = await fetch(`/api/round-record/${entry.storageRoot}`);
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || "Could not load this round.");
+      setRecord(await r.json());
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  function closeReplay() {
+    setReplayEntry(null);
+    setRecord(null);
+    setError(null);
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 w-full">
+      <AnimatePresence>
+        {replayEntry && (
+          <ReplayModal
+            entry={replayEntry}
+            record={record}
+            loading={loading}
+            error={error}
+            onClose={closeReplay}
+          />
+        )}
+      </AnimatePresence>
+
 
       {/* ── Page header ───────────────────────────────────────────── */}
       <motion.div
@@ -189,7 +233,7 @@ export default function HistoryPage({
             className="space-y-3"
           >
             {history.map((entry, index) => (
-              <HistoryItem key={entry.roundId + index} entry={entry} index={index} />
+              <HistoryItem key={entry.roundId + index} entry={entry} index={index} onView={openReplay} />
             ))}
           </motion.div>
         )}
@@ -199,7 +243,15 @@ export default function HistoryPage({
 }
 
 /* ─── Individual history row ─────────────────────────────────────── */
-function HistoryItem({ entry, index }: { entry: GameHistoryEntry; index: number }) {
+function HistoryItem({
+  entry,
+  index,
+  onView,
+}: {
+  entry: GameHistoryEntry;
+  index: number;
+  onView: (entry: GameHistoryEntry) => void;
+}) {
   const isCorrect = entry.correct;
   const txUrl = entry.storageTx
     ? `https://chainscan-galileo.0g.ai/tx/${entry.storageTx}`
@@ -251,8 +303,19 @@ function HistoryItem({ entry, index }: { entry: GameHistoryEntry; index: number 
           </span>
         )}
 
-        {/* 0G on-chain link */}
-        {txUrl ? (
+        {/* Replay the saved round from 0G Storage */}
+        {entry.storageRoot ? (
+          <button
+            onClick={() => onView(entry)}
+            title="Replay this saved round from 0G Storage"
+            className="inline-flex items-center gap-1 text-[10px] font-black font-mono uppercase tracking-wider
+              bg-brand-violet/10 border border-brand-violet/30 text-brand-violet
+              hover:bg-brand-violet/20 hover:text-white hover:border-brand-violet/60
+              px-2.5 py-1 rounded-full transition-all cursor-pointer"
+          >
+            <Play className="w-2.5 h-2.5" /> Replay
+          </button>
+        ) : txUrl ? (
           <a
             href={txUrl}
             target="_blank"
@@ -275,5 +338,129 @@ function HistoryItem({ entry, index }: { entry: GameHistoryEntry; index: number 
         )}
       </div>
     </motion.div>
+  );
+}
+
+/* ─── Replay modal: the saved round, fetched live from 0G Storage ─── */
+function ReplayModal({
+  entry,
+  record,
+  loading,
+  error,
+  onClose,
+}: {
+  entry: GameHistoryEntry;
+  record: StoredRound | null;
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+}) {
+  const CHAIN = "https://chainscan-galileo.0g.ai/tx/";
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+      />
+      <motion.div
+        initial={{ scale: 0.95, y: 16, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 16, opacity: 0 }}
+        transition={{ type: "spring", duration: 0.4 }}
+        className="relative glass-card border border-white/10 rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-y-auto z-10 p-6"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white p-1.5 rounded-full cursor-pointer transition-colors"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <span className="font-mono text-[10px] tracking-widest text-brand-violet uppercase">Saved round · replay</span>
+        <h2 className="text-lg font-bold font-display text-white mt-1 mb-4 pr-8">{entry.prompt}</h2>
+
+        {loading && (
+          <div className="flex flex-col items-center gap-3 py-12 text-text-muted">
+            <Loader2 className="w-7 h-7 animate-spin text-brand-violet" />
+            <span className="text-sm font-mono">Fetching this round from 0G Storage…</span>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex flex-col items-center gap-2 py-10 text-center">
+            <AlertCircle className="w-7 h-7 text-brand-red" />
+            <span className="text-sm text-text-muted">{error}</span>
+          </div>
+        )}
+
+        {record && (
+          <>
+            <div className="space-y-2">
+              {record.answers.map((a) => {
+                const isHuman = a.seat === record.humanSeat;
+                const isGuess = a.seat === entry.guessedSeat;
+                return (
+                  <div
+                    key={a.seat}
+                    className={`rounded-xl p-3 border ${
+                      isHuman
+                        ? "bg-brand-green/10 border-brand-green/40"
+                        : "bg-white/[0.03] border-white/8"
+                    }`}
+                  >
+                    <div className="flex justify-between items-center mb-1 text-[10px] font-mono uppercase tracking-wider">
+                      <span className="text-text-muted">Seat {a.seat + 1}</span>
+                      <span className="flex items-center gap-1.5">
+                        {isGuess && (
+                          <span className="text-white/70 border border-white/20 px-1.5 rounded">your guess</span>
+                        )}
+                        {isHuman ? (
+                          <span className="text-brand-green font-bold">human</span>
+                        ) : a.verified ? (
+                          <span className="text-brand-green">AI · ✓ 0G</span>
+                        ) : (
+                          <span className="text-brand-blue">AI</span>
+                        )}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-200">{a.text}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Proof footer */}
+            <div className="mt-5 pt-4 border-t border-white/8 flex flex-wrap items-center gap-3">
+              <span className="flex items-center gap-1.5 text-xs text-brand-green font-mono">
+                <ShieldCheck className="w-4 h-4" /> fetched live from 0G Storage
+              </span>
+              {entry.storageTx && (
+                <a
+                  href={`${CHAIN}${entry.storageTx}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-mono text-brand-violet hover:text-white flex items-center gap-1"
+                >
+                  storage tx <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+              {entry.chainTx && (
+                <a
+                  href={`${CHAIN}${entry.chainTx}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs font-mono text-brand-blue hover:text-white flex items-center gap-1"
+                >
+                  attestation tx <ExternalLink className="w-3 h-3" />
+                </a>
+              )}
+            </div>
+          </>
+        )}
+      </motion.div>
+    </div>
   );
 }

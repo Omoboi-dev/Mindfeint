@@ -60,8 +60,26 @@ export interface GameHistoryEntry {
   humanSeat: number;
   correct: boolean;
   timestamp: string;
+  storageRoot?: string | null; // 0G storage root, used to replay the saved round
   storageTx?: string | null; // 0G storage commit tx (explorer-viewable)
   chainTx?: string | null; // 0G chain attestation tx
+}
+
+/** A round record as stored on 0G Storage (returned by /api/round-record/:root). */
+export interface StoredRound {
+  game?: string;
+  prompt: string;
+  promptPack?: string;
+  humanSeat: number;
+  votes?: Record<string, number>;
+  ts?: number;
+  answers: {
+    seat: number;
+    text: string;
+    isHuman: boolean;
+    personaId?: string;
+    verified?: boolean;
+  }[];
 }
 
 export interface PlayerStats {
