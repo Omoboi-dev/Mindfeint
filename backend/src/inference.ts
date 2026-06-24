@@ -47,6 +47,8 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const MAX_ANSWER_CHARS = 150;
 function shorten(raw: string): string {
   let t = raw.replace(/\s+/g, " ").trim();
+  // Replace dashes (em, en, or spaced hyphen) with a comma — no dashes in answers.
+  t = t.replace(/\s*[—–]\s*/g, ", ").replace(/\s+-\s+/g, ", ");
   // Drop the filler opener the model loves ("Well, ...") — it became a tell.
   t = t.replace(/^(well|honestly|so|hmm|oh),?\s+/i, "");
   t = t.charAt(0).toUpperCase() + t.slice(1);
@@ -97,10 +99,11 @@ export async function askPersona(
   persona: Persona,
   prompt: string,
   verify = true,
+  avoid: string[] = [],
 ): Promise<PersonaAnswer> {
   for (let attempt = 0; attempt < 4; attempt++) {
     if (attempt > 0) await sleep(700 * attempt);
-    const out = await askPersonaOnce(persona, prompt, verify);
+    const out = await askPersonaOnce(persona, prompt, verify, avoid);
     if (out) return out;
   }
   return { text: fallbackFor(persona) };
@@ -111,11 +114,16 @@ async function askPersonaOnce(
   persona: Persona,
   prompt: string,
   verify: boolean,
+  avoid: string[] = [],
 ): Promise<PersonaAnswer | null> {
   const { broker, provider, endpoint, model } = await getInference();
 
+  const avoidNote = avoid.length
+    ? `\nOther players already answered with these, so pick a clearly DIFFERENT topic or angle and do not echo them:\n` +
+      avoid.map((a) => `- ${a}`).join("\n")
+    : "";
   const system = `You are role-playing a person. PERSONA: ${persona.mind}\n${PASSING_RULES}`;
-  const user = `Prompt: ${prompt}\nAnswer in character, one or two casual sentences.`;
+  const user = `Prompt: ${prompt}\nAnswer in character as one short sentence.${avoidNote}`;
 
   let data: any;
   let chatId: string | undefined;
@@ -174,14 +182,22 @@ async function askPersonaOnce(
  * was causing several answers per round to fail. One-at-a-time is far more reliable;
  * total time is similar because failed parallel calls were retrying anyway.
  */
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]/g, "").replace(/\s+/g, " ").trim();
+
 export async function askAll(
   personas: Persona[],
   prompt: string,
   verify = true,
 ): Promise<PersonaAnswer[]> {
   const out: PersonaAnswer[] = [];
+  const seen = new Set<string>();
   for (const p of personas) {
-    out.push(await askPersona(p, prompt, verify));
+    // Feed prior answers forward so each persona picks a different take.
+    let ans = await askPersona(p, prompt, verify, out.map((a) => a.text));
+    // Last-resort guard against an exact duplicate line slipping through.
+    if (seen.has(norm(ans.text))) ans = { ...ans, text: fallbackFor(p), verified: undefined };
+    seen.add(norm(ans.text));
+    out.push(ans);
   }
   return out;
 }
