@@ -36,7 +36,7 @@ export async function recordRound(round: Round): Promise<RecordRefs> {
         votes: round.votes,
         ts: round.createdAt,
       }),
-      new Promise<null>((r) => setTimeout(() => r(null), 45000)),
+      new Promise<null>((r) => setTimeout(() => r(null), 60000)),
     ]);
     const root = upload?.root ?? null;
     const storageTx = upload?.txHash ?? null;
